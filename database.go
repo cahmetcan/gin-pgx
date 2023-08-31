@@ -12,7 +12,10 @@ import (
 )
 
 type Row struct {
-	id any
+	id         any
+	created_at time.Time
+	title      string
+	db_time    time.Time
 }
 
 func dbConnect() (*pgxpool.Pool, *pgx.Conn, error) {
@@ -39,7 +42,7 @@ func dbConnect() (*pgxpool.Pool, *pgx.Conn, error) {
 	return dbPool, conn.Conn(), nil
 }
 
-func execQuery(query string, Conn *pgx.Conn) ([]Row, int, string) {
+func execQuery(query string, Conn *pgx.Conn) (any, int, string) {
 
 	startQuery := time.Now()
 	rows, err := Conn.Query(context.Background(), query)
@@ -53,7 +56,7 @@ func execQuery(query string, Conn *pgx.Conn) ([]Row, int, string) {
 	var rowSlice []Row
 	for rows.Next() {
 		var r Row
-		err := rows.Scan(&r.id)
+		err := rows.Scan(&r.id, &r.created_at, &r.title, &r.db_time)
 		if err != nil {
 			fmt.Println("Error scanning rows:", err)
 		}
@@ -63,19 +66,7 @@ func execQuery(query string, Conn *pgx.Conn) ([]Row, int, string) {
 		fmt.Println("Error scanning rows:", err)
 	}
 
-	for rows.Next() {
-		var r Row
-		err := rows.Scan(&r.id)
-		if err != nil {
-			fmt.Println("Error scanning rows:", err)
-		}
-		rowSlice = append(rowSlice, r)
-	}
-	if err := rows.Err(); err != nil {
-		panic(err)
-	}
-
-	return rowSlice, len(rowSlice), execTime.String()
+	return rows, 1, execTime.String()
 }
 
 func eQuery(query string, dbPool *pgxpool.Pool) (int64, string) {
@@ -84,7 +75,7 @@ func eQuery(query string, dbPool *pgxpool.Pool) (int64, string) {
 	execTime := time.Since(startQuery)
 
 	if err != nil {
-		fmt.Println("Error executing query:", err)
+		fmt.Println("Error executing query:!", err)
 		return 0, "0"
 	}
 

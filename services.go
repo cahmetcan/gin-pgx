@@ -92,7 +92,7 @@ func i(c *gin.Context) {
 }
 
 func s(c *gin.Context) {
-	query := "SELECT * FROM test"
+	query := "Select  id maxID, created_at, title, CURRENT_TIMESTAMP  db_time FROM test_table where id = (select max(id) from test_table)"
 	_, conn, err := dbConnect()
 
 	if err != nil {
