@@ -4,20 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func qE(c *gin.Context) {
-	// randomId := strconv.Itoa(rand.Intn(100))
-	startQuery := time.Now()
-
-	/* 	query := (fmt.Sprintf(`
-		insert into test (id) values (%s) returning id;
-	`, randomId)) */
-
-	// get query from params
 	query := c.Query("q")
 
 	if query == "" {
@@ -40,7 +31,7 @@ func qE(c *gin.Context) {
 		return
 	}
 
-	result := eQuery(query, pool)
+	result, queryTime := eQuery(query, pool)
 
 	if err != nil {
 		fmt.Println("Error inserting into test table:", err)
@@ -51,10 +42,9 @@ func qE(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("Time to query:", time.Since(startQuery))
-
 	c.JSON(200, gin.H{
 		"success": "true",
+		"time":    queryTime,
 		"message": result,
 	})
 }
@@ -66,7 +56,6 @@ websocket ile blockchain'den gelen datayı dinlemek
 
 func i(c *gin.Context) {
 	randomId := strconv.Itoa(rand.Intn(100))
-	startQuery := time.Now()
 	fmt.Println("Inserting ", randomId, " into test table... ")
 
 	query := (fmt.Sprintf(`
@@ -83,7 +72,7 @@ func i(c *gin.Context) {
 		return
 	}
 
-	result := eQuery(query, pool)
+	result, queryTime := eQuery(query, pool)
 
 	if err != nil {
 		fmt.Println("Error inserting into test table:", err)
@@ -94,10 +83,9 @@ func i(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("Time to query:", time.Since(startQuery))
-
 	c.JSON(200, gin.H{
 		"success": "true",
+		"time":    queryTime,
 		"message": result,
 	})
 
@@ -116,7 +104,7 @@ func s(c *gin.Context) {
 		return
 	}
 
-	result := execQuery(query, conn)
+	result, len, queryTime := execQuery(query, conn)
 	resultString := fmt.Sprintf("%v", result)
 
 	if err != nil {
@@ -130,6 +118,8 @@ func s(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"success": "true",
+		"time":    queryTime,
+		"length":  len,
 		"message": resultString,
 	})
 }

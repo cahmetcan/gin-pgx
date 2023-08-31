@@ -17,6 +17,6 @@ func main() {
 	r.GET("/qE", qE)
 	r.GET("/insert", i)
 	r.GET("/select", s)
-	r.Run()
+	r.Run(":9000")
 
 }

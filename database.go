@@ -24,13 +24,11 @@ func dbConnect() (*pgxpool.Pool, *pgx.Conn, error) {
 
 	dbPool, err := pgxpool.Connect(context.Background(), databaseUrl)
 
-	startConnection := time.Now()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		return nil, nil, err
 	}
 	fmt.Println("Connected to database")
-	fmt.Println("Time to connect:", time.Since(startConnection))
 
 	conn, err := dbPool.Acquire(context.Background())
 	if err != nil {
@@ -41,11 +39,11 @@ func dbConnect() (*pgxpool.Pool, *pgx.Conn, error) {
 	return dbPool, conn.Conn(), nil
 }
 
-func execQuery(query string, Conn *pgx.Conn) any {
+func execQuery(query string, Conn *pgx.Conn) ([]Row, int, string) {
 
 	startQuery := time.Now()
 	rows, err := Conn.Query(context.Background(), query)
-	fmt.Println("Time to query:", time.Since(startQuery))
+	execTime := time.Since(startQuery)
 
 	if err != nil {
 		fmt.Println("Error executing query:", err)
@@ -74,25 +72,21 @@ func execQuery(query string, Conn *pgx.Conn) any {
 		rowSlice = append(rowSlice, r)
 	}
 	if err := rows.Err(); err != nil {
-		fmt.Println("Error scanning rows:", err)
+		panic(err)
 	}
 
-	fmt.Println("Length of rowSlice:", len(rowSlice))
-
-	return rowSlice
+	return rowSlice, len(rowSlice), execTime.String()
 }
 
-func eQuery(query string, dbPool *pgxpool.Pool) any {
+func eQuery(query string, dbPool *pgxpool.Pool) (int64, string) {
 	startQuery := time.Now()
 	rows, err := dbPool.Exec(context.Background(), query)
+	execTime := time.Since(startQuery)
 
 	if err != nil {
 		fmt.Println("Error executing query:", err)
-		return err
+		return 0, "0"
 	}
-	// defer rows.Close()
 
-	fmt.Println("Time to query:", time.Since(startQuery))
-	fmt.Print("Result: " + rows.String() + "\n")
-	return rows.RowsAffected()
+	return rows.RowsAffected(), execTime.String()
 }
