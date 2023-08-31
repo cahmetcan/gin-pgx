@@ -1,14 +1,117 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func qE(c *gin.Context) {
+// Executes the query given in the parameter
+func executeParam(c *gin.Context) {
+	tableName := c.Query("q")
+	startTime := time.Now()
+
+	rows, execTime, a := execQuery(tableName)
+
+	c.JSON(200, gin.H{
+		"success":          "true",
+		"endedIn":          time.Since(startTime).String(),
+		"queryExecTime":    execTime,
+		"databaseConnTime": a,
+		"message":          rows,
+	})
+}
+
+// Gets the counts of the rows in the table
+func getCountsByParsing(c *gin.Context) {
+	query := "Select  id maxID, created_at, title, CURRENT_TIMESTAMP  db_time FROM test_table where id = (select max(id) from test_table)"
+
+	startTime := time.Now()
+
+	rows, execTime, a := execQuery(query)
+
+	c.JSON(200, gin.H{
+		"success":          "true",
+		"endPointCallTime": time.Since(startTime).String(),
+		"queryExecTime":    execTime,
+		"databaseConnTime": a,
+		"message":          rows,
+	})
+}
+
+// Gets the rows with the limit given in the parameter
+func getRowsWithLimit(c *gin.Context) {
+	startTime := time.Now()
+	limit := c.Query("q")
+	if limit == "" {
+		c.JSON(400, gin.H{
+			"success": "false",
+			"message": "No query provided",
+		})
+		return
+	}
+
+	query := "SELECT id, created_at, title, CURRENT_TIMESTAMP  db_time FROM test_table ORDER BY id DESC LIMIT " + limit
+
+	rows, execTime, a := execQuery(query)
+
+	c.JSON(200, gin.H{
+		"success":          "true",
+		"endPointCallTime": time.Since(startTime).String(),
+		"queryExecTime":    execTime,
+		"databaseConnTime": a,
+		"message":          rows,
+	})
+}
+
+// Gets the max id of the table
+func getMaxId(c *gin.Context) {
+	startTime := time.Now()
+	tableName := c.Query("q")
+	if tableName == "" {
+		c.JSON(400, gin.H{
+			"success": "false",
+			"message": "No query provided",
+		})
+		return
+	}
+
+	query := "SELECT max(id) FROM " + tableName
+
+	rows, execTime, a := execQuery(query)
+
+	c.JSON(200, gin.H{
+		"success":          "true",
+		"endPointCallTime": time.Since(startTime).String(),
+		"queryExecTime":    execTime,
+		"databaseConnTime": a,
+		"message":          rows,
+	})
+}
+
+// Gets random row by id
+func getRandomRowById(c *gin.Context) {
+	startTime := time.Now()
+
+	query := "SELECT id FROM test_table WHERE id = " + strconv.Itoa(rand.Intn(5))
+
+	rows, execTime, a := execQuery(query)
+
+	c.JSON(200, gin.H{
+		"success":          "true",
+		"endPointCallTime": time.Since(startTime).String(),
+		"queryExecTime":    execTime,
+		"databaseConnTime": a,
+		"message":          rows,
+	})
+}
+
+/*
+
+
+func query(c *gin.Context) {
 	query := c.Query("q")
 
 	if query == "" {
@@ -18,7 +121,6 @@ func qE(c *gin.Context) {
 		})
 		return
 	}
-	// fmt.Print("Inserting ", randomId, " into test table... ")
 	fmt.Println("Query:", query)
 
 	pool, _, err := dbConnect()
@@ -31,7 +133,7 @@ func qE(c *gin.Context) {
 		return
 	}
 
-	result, queryTime := eQuery(query, pool)
+	result, queryTime := poolQuery(query, pool)
 
 	if err != nil {
 		fmt.Println("Error inserting into test table:", err)
@@ -49,12 +151,7 @@ func qE(c *gin.Context) {
 	})
 }
 
-/*
-blockchain'den rpc ile logları alıp datayı parse edip anlamlandırıp db'ye yazdırmak
-websocket ile blockchain'den gelen datayı dinlemek
-*/
-
-func i(c *gin.Context) {
+func insertRandomId(c *gin.Context) {
 	randomId := strconv.Itoa(rand.Intn(100))
 	fmt.Println("Inserting ", randomId, " into test table... ")
 
@@ -72,7 +169,7 @@ func i(c *gin.Context) {
 		return
 	}
 
-	result, queryTime := eQuery(query, pool)
+	result, queryTime := poolQuery(query, pool)
 
 	if err != nil {
 		fmt.Println("Error inserting into test table:", err)
@@ -91,7 +188,7 @@ func i(c *gin.Context) {
 
 }
 
-func s(c *gin.Context) {
+func getCount(c *gin.Context) {
 	query := "Select  id maxID, created_at, title, CURRENT_TIMESTAMP  db_time FROM test_table where id = (select max(id) from test_table)"
 	_, conn, err := dbConnect()
 
@@ -104,7 +201,7 @@ func s(c *gin.Context) {
 		return
 	}
 
-	result, len, queryTime := execQuery(query, conn)
+	result, len, queryTime := count(query, conn)
 	resultString := fmt.Sprintf("%v", result)
 
 	if err != nil {
@@ -123,3 +220,4 @@ func s(c *gin.Context) {
 		"message": resultString,
 	})
 }
+*/
